@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@vercel/kv": ["./node_modules/@vercel/kv/dist/index.d.ts"]
     }
   },
   "include": [
