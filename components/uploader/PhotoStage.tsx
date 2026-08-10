@@ -114,7 +114,7 @@ export function PhotoStage({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className={`w-full h-full touch-none rounded-lg border border-sand ${
+        className={`w-full h-full touch-none rounded-lg border-2 border-sand ${
           dragging ? "cursor-grabbing" : "cursor-grab"
         }`}
       />

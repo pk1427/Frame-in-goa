@@ -70,17 +70,17 @@ export function DropZone({
       onDragOver={handleDragOver}
       className={`w-full rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${
         disabled
-          ? "opacity-50 cursor-not-allowed border-foreground/20"
-          : "border-coral hover:border-lagoon hover:bg-sand/10"
+          ? "opacity-50 cursor-not-allowed border-white/20"
+          : "border-accent hover:bg-sand/20"
       }`}
     >
-      <p className="font-display text-lg text-ink">
+      <p className="font-display text-lg text-white">
         {multiple
-          ? "Drop multiple photos here or tap to upload"
-          : "Drop a photo here or tap to upload"}
+          ? "DROP MULTIPLE PHOTOS OR TAP TO UPLOAD"
+          : "DROP A PHOTO OR TAP TO UPLOAD"}
       </p>
-      <p className="font-mono text-xs text-ink/60 mt-2">
-        {multiple ? "Upload multiple photos" : "JPG, PNG, HEIC"}
+      <p className="font-mono text-xs text-white/60 mt-2 tracking-wider">
+        {multiple ? "Multiple photos supported" : "JPG, PNG, HEIC"}
       </p>
     </div>
   );

@@ -1,7 +1,8 @@
 import type { CardInput } from "@/lib/types";
 import { coverFit } from "@/lib/image/cover";
 import { colors, layout, radii } from "./theme";
-import { frauncesFamily, spaceMonoFamily } from "./fonts";
+import { imbueFamily, victorMonoFamily } from "./fonts";
+import { drawCornerRibbon, drawPinDot, seededRotation } from "./motifs";
 
 function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -56,26 +57,18 @@ export function drawCard(ctx: CanvasRenderingContext2D, input: CardInput): void 
 
   ctx.clearRect(0, 0, W, H);
 
-  ctx.fillStyle = colors.cream;
+  ctx.fillStyle = colors.primary;
   ctx.fillRect(0, 0, W, H);
 
   const margin = 48;
   roundRect(ctx, margin, margin, W - margin * 2, H - margin * 2, radii.card);
-  ctx.fillStyle = colors.ink;
+  ctx.fillStyle = colors.offwhite;
   ctx.fill();
+  ctx.strokeStyle = colors.accent;
+  ctx.lineWidth = 8;
+  ctx.stroke();
 
   const innerMargin = 64;
-  roundRect(
-    ctx,
-    innerMargin,
-    innerMargin,
-    W - innerMargin * 2,
-    H - innerMargin * 2,
-    radii.card - 8
-  );
-  ctx.fillStyle = colors.cream;
-  ctx.fill();
-
   const photoSize = layout.photoBox;
   const photoX = (W - photoSize) / 2;
   const photoY = 100;
@@ -104,46 +97,84 @@ export function drawCard(ctx: CanvasRenderingContext2D, input: CardInput): void 
   ctx.restore();
 
   roundRect(ctx, photoX, photoY, photoSize, photoSize, radii.card);
-  ctx.strokeStyle = colors.coral;
+  ctx.strokeStyle = colors.accent;
   ctx.lineWidth = 8;
   ctx.stroke();
 
-  ctx.font = `700 64px ${frauncesFamily}`;
+  const nameY = photoY + photoSize + 80;
+  ctx.font = `700 88px ${imbueFamily}`;
   ctx.fillStyle = colors.ink;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(input.name || "Your Name", W / 2, photoY + photoSize + 60);
+  ctx.fillText(input.name || "Your Name", W / 2, nameY);
 
-  ctx.font = `400 36px ${spaceMonoFamily}`;
-  ctx.fillStyle = colors.coral;
-  ctx.fillText(input.stack || "Stack / Role", W / 2, photoY + photoSize + 115);
+  const stackLabelY = nameY + 70;
+  ctx.font = `700 24px ${victorMonoFamily}`;
+  ctx.fillStyle = colors.accent;
+  ctx.fillText("STACK", W / 2, stackLabelY);
 
-  const stampCx = W / 2;
-  const stampCy = H - 280;
-  const outerR = layout.stampOuter / 2;
-  const innerR = layout.stampInner / 2;
+  const stackValueY = stackLabelY + 36;
+  ctx.font = `400 28px ${victorMonoFamily}`;
+  ctx.fillStyle = colors.ink;
+  const stackText = input.stack || "Stack / Role";
+  const stackLines = wrapText(ctx, stackText, W - innerMargin * 2 - 40);
+  stackLines.forEach((line, i) => {
+    ctx.fillText(line, W / 2, stackValueY + i * 36);
+  });
+
+  const footerTop = H - 320;
+  const footerHeight = 280;
+
+  ctx.strokeStyle = colors.sand;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(innerMargin + 20, footerTop);
+  ctx.lineTo(W - innerMargin - 20, footerTop);
+  ctx.stroke();
+
+  const stampCx = innerMargin + 100;
+  const stampCy = footerTop + footerHeight / 2;
+  const outerR = 100;
+  const innerR = 80;
 
   ctx.beginPath();
   ctx.arc(stampCx, stampCy, outerR, 0, Math.PI * 2);
-  ctx.strokeStyle = colors.lagoon;
-  ctx.lineWidth = 8;
-  ctx.setLineDash([20, 15]);
+  ctx.strokeStyle = colors.pink;
+  ctx.lineWidth = 6;
+  ctx.setLineDash([16, 12]);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  ctx.font = `700 40px ${spaceMonoFamily}`;
+  ctx.font = `700 28px ${victorMonoFamily}`;
   ctx.fillStyle = colors.ink;
-  const text = input.builderClass || "Builder Class";
-  const maxWidth = innerR * 1.8;
-  const lines = wrapText(ctx, text, maxWidth);
-
-  const lineHeight = 52;
-  const startY = stampCy - ((lines.length - 1) * lineHeight) / 2;
-  lines.forEach((line, i) => {
-    ctx.fillText(line, stampCx, startY + i * lineHeight);
+  const builderText = input.builderClass || "Builder Class";
+  const builderLines = wrapText(ctx, builderText, innerR * 1.6);
+  const builderLineHeight = 36;
+  const builderStartY = stampCy - ((builderLines.length - 1) * builderLineHeight) / 2;
+  builderLines.forEach((line, i) => {
+    ctx.fillText(line, stampCx, builderStartY + i * builderLineHeight);
   });
 
-  ctx.font = `700 36px ${frauncesFamily}`;
-  ctx.fillStyle = colors.coral;
-  ctx.fillText("#FrameInGoa", W / 2, H - 60);
+  const qrSize = 120;
+  const qrX = W - innerMargin - qrSize - 40;
+  const qrY = footerTop + (footerHeight - qrSize) / 2;
+
+  ctx.strokeStyle = colors.sand;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(qrX, qrY, qrSize, qrSize);
+
+  ctx.font = `400 14px ${victorMonoFamily}`;
+  ctx.fillStyle = colors.sand;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("QR AFTER SHARE", qrX + qrSize / 2, qrY + qrSize / 2);
+
+  const pinRotation = seededRotation(input.builderClass, 2);
+  ctx.save();
+  ctx.translate(stampCx, stampCy - outerR - 4);
+  ctx.rotate(pinRotation);
+  drawPinDot(ctx, 0, 0, colors.pink);
+  ctx.restore();
+
+  drawCornerRibbon(ctx, "HH GOA 2026");
 }

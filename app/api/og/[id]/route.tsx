@@ -6,14 +6,14 @@ import { join } from "path";
 
 export const runtime = "nodejs";
 
-const frauncesBold = readFile(
-  join(process.cwd(), "public/fonts/fraunces-700.woff2")
+const imbueBold = readFile(
+  join(process.cwd(), "public/fonts/imbue-700.woff2")
 );
-const spaceMonoRegular = readFile(
-  join(process.cwd(), "public/fonts/space-mono-400.woff2")
+const victorMonoRegular = readFile(
+  join(process.cwd(), "public/fonts/victor-mono-400.woff2")
 );
-const spaceMonoBold = readFile(
-  join(process.cwd(), "public/fonts/space-mono-700.woff2")
+const victorMonoBold = readFile(
+  join(process.cwd(), "public/fonts/victor-mono-700.woff2")
 );
 
 export async function GET(
@@ -30,8 +30,8 @@ export async function GET(
     return new Response("Not found", { status: 404 });
   }
 
-  const [frauncesData, spaceMonoRegularData, spaceMonoBoldData] =
-    await Promise.all([frauncesBold, spaceMonoRegular, spaceMonoBold]);
+  const [imbueData, victorMonoRegularData, victorMonoBoldData] =
+    await Promise.all([imbueBold, victorMonoRegular, victorMonoBold]);
 
   const width = layout.cardWidth;
   const height =
@@ -47,8 +47,8 @@ export async function GET(
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: colors.cream,
-            fontFamily: "Fraunces",
+            backgroundColor: colors.primary,
+            fontFamily: "VictorMono",
           }}
         >
           <div
@@ -79,7 +79,7 @@ export async function GET(
                 marginTop: -390,
                 marginLeft: -390,
                 borderRadius: "50%",
-                border: "16px solid #ff6b6b",
+                border: "16px solid #FEE101",
               }}
             />
             <div
@@ -92,9 +92,19 @@ export async function GET(
                 marginTop: -430,
                 marginLeft: -430,
                 borderRadius: "50%",
-                border: "8px dashed #4ecdc4",
+                border: "8px dashed #E91E63",
               }}
             />
+            <div
+              style={{
+                position: "absolute",
+                top: 20,
+                right: 20,
+                fontSize: 64,
+              }}
+            >
+              🌴
+            </div>
           </div>
           <div
             style={{
@@ -103,29 +113,34 @@ export async function GET(
               width: "100%",
               display: "flex",
               justifyContent: "center",
-              fontFamily: "Fraunces",
+              fontFamily: "Imbue",
               fontWeight: 700,
               fontSize: 48,
-              color: colors.coral,
+              color: colors.accent,
             }}
           >
-            #FrameInGoa
-          </div>
-        </div>
+            #FRAMEINGOA
+           </div>
+         </div>
       ),
       {
         width,
         height,
         fonts: [
           {
-            name: "Fraunces",
-            data: frauncesData,
+            name: "Imbue",
+            data: imbueData,
             weight: 700,
           },
           {
-            name: "SpaceMono",
-            data: spaceMonoBoldData,
+            name: "VictorMono",
+            data: victorMonoBoldData,
             weight: 700,
+          },
+          {
+            name: "VictorMono",
+            data: victorMonoRegularData,
+            weight: 400,
           },
         ],
       }
@@ -161,7 +176,7 @@ export async function GET(
             height: photoHeight,
             borderRadius: 24,
             objectFit: "cover",
-            border: "8px solid #ff6b6b",
+            border: "8px solid #FEE101",
           }}
           alt=""
         />
@@ -177,8 +192,8 @@ export async function GET(
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: colors.cream,
-            fontFamily: "Fraunces",
+            backgroundColor: colors.primary,
+            fontFamily: "VictorMono",
           }}
         >
           <div
@@ -196,15 +211,15 @@ export async function GET(
                 left: 0,
                 right: 0,
                 textAlign: "center",
-                fontFamily: "Fraunces",
+                fontFamily: "Imbue",
                 fontWeight: 700,
                 fontSize: 36,
-                color: colors.coral,
+                color: colors.accent,
               }}
             >
-              #FrameInGoa
-            </div>
-          </div>
+              #FRAMEINGOA
+           </div>
+         </div>
         </div>
       ),
       {
@@ -212,9 +227,14 @@ export async function GET(
         height,
         fonts: [
           {
-            name: "Fraunces",
-            data: frauncesData,
+            name: "Imbue",
+            data: imbueData,
             weight: 700,
+          },
+          {
+            name: "VictorMono",
+            data: victorMonoRegularData,
+            weight: 400,
           },
         ],
       }
@@ -230,8 +250,8 @@ export async function GET(
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: colors.cream,
-          fontFamily: "Fraunces",
+          backgroundColor: colors.primary,
+          fontFamily: "VictorMono",
         }}
       >
         <div
@@ -249,23 +269,13 @@ export async function GET(
               right: 48,
               bottom: 48,
               borderRadius: 24,
-              backgroundColor: colors.ink,
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: 64,
-              left: 64,
-              right: 64,
-              bottom: 64,
-              borderRadius: 16,
-              backgroundColor: colors.cream,
+              backgroundColor: colors.offwhite,
             }}
           />
 
           <img
             src={record.photoDataUrl}
+            alt=""
             style={{
               position: "absolute",
               top: 100,
@@ -274,7 +284,7 @@ export async function GET(
               height: 680,
               borderRadius: 24,
               objectFit: "cover",
-              border: "8px solid #ff6b6b",
+              border: "8px solid #FEE101",
             }}
           />
 
@@ -285,7 +295,7 @@ export async function GET(
               left: 0,
               right: 0,
               textAlign: "center",
-              fontFamily: "Fraunces",
+              fontFamily: "Imbue",
               fontWeight: 700,
               fontSize: 64,
               color: colors.ink,
@@ -301,10 +311,10 @@ export async function GET(
               left: 0,
               right: 0,
               textAlign: "center",
-              fontFamily: "SpaceMono",
+              fontFamily: "VictorMono",
               fontWeight: 400,
               fontSize: 36,
-              color: colors.coral,
+              color: colors.accent,
             }}
           >
             {record.stack || "Stack / Role"}
@@ -319,7 +329,7 @@ export async function GET(
               width: 320,
               height: 320,
               borderRadius: "50%",
-              border: "8px dashed #4ecdc4",
+              border: "8px dashed #E91E63",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -327,7 +337,7 @@ export async function GET(
           >
             <div
               style={{
-                fontFamily: "SpaceMono",
+                fontFamily: "VictorMono",
                 fontWeight: 700,
                 fontSize: 40,
                 color: colors.ink,
@@ -347,13 +357,13 @@ export async function GET(
               left: 0,
               right: 0,
               textAlign: "center",
-              fontFamily: "Fraunces",
+              fontFamily: "Imbue",
               fontWeight: 700,
               fontSize: 36,
-              color: colors.coral,
+              color: colors.accent,
             }}
           >
-            #FrameInGoa
+            #FRAMEINGOA
           </div>
         </div>
       </div>
@@ -363,18 +373,18 @@ export async function GET(
       height,
       fonts: [
         {
-          name: "Fraunces",
-          data: frauncesData,
+          name: "Imbue",
+          data: imbueData,
           weight: 700,
         },
         {
-          name: "SpaceMono",
-          data: spaceMonoRegularData,
+          name: "VictorMono",
+          data: victorMonoRegularData,
           weight: 400,
         },
         {
-          name: "SpaceMono",
-          data: spaceMonoBoldData,
+          name: "VictorMono",
+          data: victorMonoBoldData,
           weight: 700,
         },
       ],

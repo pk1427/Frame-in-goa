@@ -28,8 +28,11 @@ export function BuilderScreen({ mode }: BuilderScreenProps) {
   const [stack, setStack] = useState("");
   const [builderClass, setBuilderClass] = useState(() => pickRandom());
   const [bootComplete, setBootComplete] = useState(false);
+  const [shareId, setShareId] = useState<string | null>(null);
 
   const handleFileSelected = useCallback(async (file: File) => {
+    setBootComplete(false);
+    setShareId(null);
     setError(null);
     try {
       const img = await loadImage(file);
@@ -46,9 +49,11 @@ export function BuilderScreen({ mode }: BuilderScreenProps) {
   }, []);
 
   const handleFilesSelected = useCallback(async (files: File[]) => {
+    setBootComplete(false);
+    setShareId(null);
     setError(null);
     try {
-      const imgs = await loadImages(files);
+       const imgs = await loadImages(files.slice(0, 4));
       const slots: PhotoSlot[] = imgs.map((img, index) => ({
         id: `photo-${index}-${Date.now()}`,
         image: img,
@@ -84,13 +89,15 @@ export function BuilderScreen({ mode }: BuilderScreenProps) {
     setName("");
     setStack("");
     setBuilderClass(pickRandom());
+    setBootComplete(false);
+    setShareId(null);
   }, []);
 
   const isCombined = mode === "combined";
 
   const subtitle = isCombined
-    ? "Upload 2–4 photos to build a team frame"
-    : "Upload your photo to get started";
+    ? "UPLOAD 2–4 PHOTOS TO BUILD YOUR TEAM FRAME"
+    : "UPLOAD YOUR PHOTO TO GET STARTED";
 
   const hasMedia = image || photos.length > 0;
 
@@ -99,94 +106,98 @@ export function BuilderScreen({ mode }: BuilderScreenProps) {
   }, [image, offset, photos, layoutMode, name, stack, builderClass]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-primary flex flex-col items-center justify-center p-4">
       <main className="w-full max-w-4xl flex flex-col items-center gap-6">
-        <h1 className="font-display text-3xl md:text-4xl text-ink text-center">
-          Frame In Goa
+        <h1 className="font-display text-3xl md:text-4xl text-white text-center">
+          FRAME IN GOA
         </h1>
-        <p className="font-sans text-foreground/70 text-center">{subtitle}</p>
+        <p className="font-mono text-foreground/70 text-center uppercase tracking-wider text-xs">
+          {subtitle}
+        </p>
 
         {error && (
-          <div className="w-full p-4 rounded-lg bg-coral/10 border border-coral text-coral text-center">
+          <div className="w-full p-4 rounded-lg bg-accent/10 border border-accent text-accent text-center">
             {error}
           </div>
         )}
 
-        {!hasMedia ? (
-          <DropZone
-            onFileSelected={handleFileSelected}
-            disabled={!!error}
-            multiple={isCombined}
-            onFilesSelected={isCombined ? handleFilesSelected : undefined}
-          />
-        ) : (
-          /* Mobile: preview above controls (order-1 / order-2).
-             Desktop: controls left, preview right (lg:order-1 / lg:order-2).
-             This reversal is deliberate — seeing the result first reads better on phones. */
-          <div className="flex flex-col lg:flex-row gap-6 w-full items-start">
-            <div className="w-full lg:w-2/5 order-2 lg:order-1 flex flex-col gap-4">
-              {isCombined ? (
-                <CollageStage
-                  photos={photos}
-                  onOffsetChange={handlePhotoOffsetChange}
-                />
-              ) : (
-                <PhotoStage
-                  image={image!}
-                  boxSize={360}
-                  offset={offset}
-                  onOffsetChange={setOffset}
-                />
-              )}
-              {mode === "card" && (
-                <CardForm
-                  name={name}
-                  stack={stack}
-                  builderClass={builderClass}
-                  onNameChange={setName}
-                  onStackChange={setStack}
-                  onBuilderClassChange={setBuilderClass}
-                />
-              )}
+        <div className="flex flex-col lg:flex-row gap-6 w-full items-start">
+          <div className="w-full lg:w-2/5 order-2 lg:order-1 flex flex-col gap-4">
+            <div className="rounded-lg border-2 border-sand p-4">
+              <p className="font-mono text-xs text-white/50 mb-3 uppercase tracking-wider">
+                UPLOAD
+              </p>
+              <DropZone
+                onFileSelected={handleFileSelected}
+                disabled={!!error}
+                multiple={isCombined}
+                onFilesSelected={isCombined ? handleFilesSelected : undefined}
+              />
             </div>
-            <div className="w-full lg:w-3/5 order-1 lg:order-2 flex flex-col gap-4 lg:sticky lg:top-4">
-              {!bootComplete && hasMedia ? (
-                <BootSequence onComplete={() => setBootComplete(true)} />
-              ) : (
-                <PreviewPulse updateKey={previewUpdateKey}>
-                  <BuilderCanvas
-                    mode={mode}
-                    image={image ?? undefined}
-                    offset={offset}
-                    photos={photos}
-                    layoutMode={layoutMode}
-                    canvasRef={setCanvasEl}
-                    name={name}
-                    stack={stack}
-                    builderClass={builderClass}
-                  />
-                </PreviewPulse>
-              )}
-              <div className="flex flex-col gap-3">
-                <ActionBar
-                  canvas={canvasEl}
+            {isCombined && photos.length > 0 && (
+              <CollageStage
+                photos={photos}
+                onOffsetChange={handlePhotoOffsetChange}
+              />
+            )}
+            {!isCombined && image && (
+              <PhotoStage
+                image={image!}
+                boxSize={360}
+                offset={offset}
+                onOffsetChange={setOffset}
+              />
+            )}
+            {mode === "card" && (
+              <CardForm
+                name={name}
+                stack={stack}
+                builderClass={builderClass}
+                onNameChange={setName}
+                onStackChange={setStack}
+                onBuilderClassChange={setBuilderClass}
+              />
+            )}
+          </div>
+          <div className="w-full lg:w-3/5 order-1 lg:order-2 flex flex-col gap-4 lg:sticky lg:top-4">
+            {!bootComplete && hasMedia ? (
+              <BootSequence onComplete={() => setBootComplete(true)} />
+            ) : (
+              <PreviewPulse updateKey={previewUpdateKey}>
+                <BuilderCanvas
                   mode={mode}
+                  image={image ?? undefined}
+                  offset={offset}
+                  photos={photos}
+                  layoutMode={layoutMode}
+                  canvasRef={setCanvasEl}
                   name={name}
                   stack={stack}
                   builderClass={builderClass}
-                  image={image}
-                  photos={photos}
+                  shareId={shareId}
                 />
-                <button
-                  onClick={handleReset}
-                  className="font-mono text-sm text-lagoon hover:text-coral transition-colors"
-                >
-                  Choose a different photo
-                </button>
-              </div>
+              </PreviewPulse>
+            )}
+            <div className="flex flex-col gap-3">
+              <ActionBar
+                canvas={canvasEl}
+                mode={mode}
+                name={name}
+                stack={stack}
+                builderClass={builderClass}
+                image={image}
+                photos={photos}
+                onShareComplete={setShareId}
+              />
+              <button
+                onClick={handleReset}
+                className="font-mono text-sm text-pink hover:text-accent uppercase tracking-wider transition-colors"
+              >
+                CHANGE PHOTO
+              </button>
             </div>
           </div>
-        )}
+        </div>
       </main>
     </div>
   );

@@ -28,19 +28,19 @@ export function CardForm({
   return (
     <div className="flex flex-col gap-4 w-full max-w-[360px]">
       <Field
-        label="Name"
+        label="NAME"
         value={name}
         onChange={(e) => onNameChange(e.target.value)}
         placeholder="Your name"
       />
       <Field
-        label="Stack / Role"
+        label="STACK / ROLE"
         value={stack}
         onChange={(e) => onStackChange(e.target.value)}
         placeholder="e.g. Full-stack Dev"
       />
       <div className="flex flex-col gap-1">
-        <span className="font-mono text-xs text-ink/70">Builder Class</span>
+        <span className="font-mono text-xs text-ink/70 uppercase tracking-wider">BUILDER CLASS</span>
         <div className="flex gap-2">
           <Field
             label=""
@@ -53,7 +53,7 @@ export function CardForm({
             onClick={handleReroll}
             type="button"
           >
-            Reroll
+            REROLL
           </Button>
         </div>
       </div>

@@ -1,7 +1,9 @@
 import type { CombinedFrameInput } from "@/lib/types";
 import { coverFit } from "@/lib/image/cover";
 import { colors, layout, radii } from "./theme";
-import { frauncesFamily } from "./fonts";
+import { imbueFamily, victorMonoFamily } from "./fonts";
+import { drawCornerRibbon } from "./motifs";
+import { getPhotoCells, GRID_PADDING, FOOTER_RESERVE } from "./grid";
 
 function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -33,36 +35,25 @@ export function drawCombined(
   const photos = input.photos;
 
   ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = colors.cream;
+
+  ctx.fillStyle = colors.primary;
   ctx.fillRect(0, 0, W, H);
 
-  const padding = 80;
-  const gap = 40;
-  const footerReserve = 140;
-  const cols = photos.length <= 2 ? photos.length : 2;
-  const rows = Math.ceil(photos.length / cols);
-
-  const availW = W - padding * 2 - gap * (cols - 1);
-  const availH = H - padding * 2 - gap * (rows - 1) - footerReserve;
-  const cellW = availW / cols;
-  const cellH = availH / rows;
+  const cells = getPhotoCells(photos.length);
 
   for (let i = 0; i < photos.length; i++) {
     const photo = photos[i];
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const x = padding + col * (cellW + gap);
-    const y = padding + row * (cellH + gap);
+    const cell = cells[i];
 
-    roundRect(ctx, x, y, cellW, cellH, radii.card);
+    roundRect(ctx, cell.x, cell.y, cell.w, cell.h, radii.card);
     ctx.save();
     ctx.clip();
 
     const cover = coverFit(
       photo.image.naturalWidth,
       photo.image.naturalHeight,
-      cellW,
-      cellH,
+      cell.w,
+      cell.h,
       photo.offset
     );
     ctx.drawImage(
@@ -71,22 +62,53 @@ export function drawCombined(
       cover.sy,
       cover.sw,
       cover.sh,
-      x,
-      y,
-      cellW,
-      cellH
+      cell.x,
+      cell.y,
+      cell.w,
+      cell.h
     );
     ctx.restore();
 
-    roundRect(ctx, x, y, cellW, cellH, radii.card);
-    ctx.strokeStyle = colors.coral;
+    roundRect(ctx, cell.x, cell.y, cell.w, cell.h, radii.card);
+    ctx.strokeStyle = colors.accent;
     ctx.lineWidth = 8;
     ctx.stroke();
   }
 
-  ctx.font = `700 36px ${frauncesFamily}`;
-  ctx.fillStyle = colors.coral;
+  const gridBottom = Math.max(...cells.map((c) => c.y + c.h));
+  const footerY = gridBottom + GRID_PADDING;
+
+  ctx.strokeStyle = colors.sand;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(GRID_PADDING + 20, footerY);
+  ctx.lineTo(W - GRID_PADDING - 20, footerY);
+  ctx.stroke();
+
+  ctx.font = `700 24px ${victorMonoFamily}`;
+  ctx.fillStyle = colors.accent;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`TEAM OF ${photos.length}`, GRID_PADDING + 40, footerY + 50);
+
+  ctx.font = `700 36px ${imbueFamily}`;
+  ctx.fillStyle = colors.accent;
+  ctx.textAlign = "center";
+  ctx.fillText("#FrameInGoa", W / 2, footerY + 60);
+
+  const qrSize = 120;
+  const qrX = W - GRID_PADDING - qrSize - 40;
+  const qrY = footerY + (FOOTER_RESERVE - qrSize) / 2;
+
+  ctx.strokeStyle = colors.sand;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(qrX, qrY, qrSize, qrSize);
+
+  ctx.font = `400 14px ${victorMonoFamily}`;
+  ctx.fillStyle = colors.sand;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("#FrameInGoa", W / 2, H - 60);
+  ctx.fillText("QR AFTER SHARE", qrX + qrSize / 2, qrY + qrSize / 2);
+
+  drawCornerRibbon(ctx, "HH GOA 2026");
 }

@@ -1,28 +1,25 @@
-import { Fraunces, Space_Mono, Inter } from "next/font/google";
+import { Imbue, Victor_Mono } from "next/font/google";
 
-export const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-});
-
-export const spaceMono = Space_Mono({
+export const imbue = Imbue({
   subsets: ["latin"],
   weight: ["400", "700"],
-  variable: "--font-space-mono",
+  variable: "--font-imbue",
 });
 
-export const inter = Inter({
+export const victorMono = Victor_Mono({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["400", "700"],
+  variable: "--font-victor-mono",
 });
 
 export const colors = {
-  ink: "#1a1a2e",
-  sand: "#f4e4bc",
-  coral: "#ff6b6b",
-  lagoon: "#4ecdc4",
-  gold: "#ffe66d",
-  cream: "#fff8e7",
+  primary: "#0B683D",
+  accent: "#FEE101",
+  pink: "#E91E63",
+  offwhite: "#FFFBE8",
+  ink: "#1A1A1A",
+  white: "#FFFFFF",
+  sand: "#1B4D2E",
 } as const;
 
 export const radii = {

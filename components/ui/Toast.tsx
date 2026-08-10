@@ -19,19 +19,23 @@ export function Toast({ message, type, onDismiss }: ToastProps) {
   }, [onDismiss]);
 
   const styles = {
-    success: "bg-lagoon text-ink border-lagoon",
-    error: "bg-coral text-cream border-coral",
-    info: "bg-gold text-ink border-gold",
+    success: "bg-pink text-white border-pink",
+    error: "bg-accent text-ink border-accent",
+    info: "bg-accent text-ink border-accent",
   };
 
   return (
     <div
-      className={`w-full py-3 px-4 rounded-lg font-mono text-sm border ${styles[type]} shadow-sm cursor-pointer`}
-      role="status"
+      className={`w-full py-3 px-4 rounded-lg font-mono text-sm uppercase tracking-wider border transition-colors`}
+      role={type === "error" ? "alert" : "status"}
       aria-live="polite"
       onClick={onDismiss}
     >
-      {message}
+      <div className={`h-full w-full rounded ${styles[type]}`}>
+        <div className="flex items-center justify-between">
+          <span className="px-1">{message}</span>
+        </div>
+      </div>
     </div>
   );
 }

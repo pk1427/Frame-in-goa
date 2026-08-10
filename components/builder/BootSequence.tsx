@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 const lines = [
-  "> initializing HH GOA 2026 builder profile...",
-  "> applying Goa theme...",
-  "> ready.",
+  "> INITIALIZING HH GOA 2026 BUILDER PROFILE...",
+  "> APPLYING GOA THEME...",
+  "> READY.",
 ];
 
 const LINE_DELAY = 180;
@@ -44,7 +44,7 @@ export function BootSequence({ onComplete }: BootSequenceProps) {
 
   return (
     <motion.div
-      className="font-mono text-sm text-lagoon/80 flex flex-col gap-1"
+      className="font-mono text-sm text-pink/80 flex flex-col gap-1"
       initial={{ opacity: 0 }}
       animate={{ opacity: exiting ? 0 : 1 }}
       transition={{ duration: 0.3 }}

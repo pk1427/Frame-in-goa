@@ -4,64 +4,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { coverFit, type CoverResult } from "@/lib/image/cover";
 import type { PhotoSlot } from "@/lib/types";
 import { layout, colors, radii } from "@/lib/render/theme";
-
-const PADDING = 80;
-const GAP = 40;
-const FOOTER_RESERVE = 140;
-
-interface CellRect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-function getGrid(photoCount: number) {
-  const W = layout.cardWidth;
-  const cols = photoCount <= 2 ? photoCount : 2;
-  const rows = Math.ceil(photoCount / cols);
-
-  const availW = W - PADDING * 2 - GAP * (cols - 1);
-  const availH =
-    layout.cardHeight - PADDING * 2 - GAP * (rows - 1) - FOOTER_RESERVE;
-  const cellW = availW / cols;
-  const cellH = availH / rows;
-
-  return { cols, rows, cellW, cellH };
-}
-
-function getCellRect(index: number, cols: number, cellW: number, cellH: number): CellRect {
-  const col = index % cols;
-  const row = Math.floor(index / cols);
-  return {
-    x: PADDING + col * (cellW + GAP),
-    y: PADDING + row * (cellH + GAP),
-    w: cellW,
-    h: cellH,
-  };
-}
-
-function hitTest(
-  px: number,
-  py: number,
-  photos: PhotoSlot[],
-  cols: number,
-  cellW: number,
-  cellH: number
-): number | null {
-  for (let i = 0; i < photos.length; i++) {
-    const rect = getCellRect(i, cols, cellW, cellH);
-    if (
-      px >= rect.x &&
-      px <= rect.x + rect.w &&
-      py >= rect.y &&
-      py <= rect.y + rect.h
-    ) {
-      return i;
-    }
-  }
-  return null;
-}
+import { getPhotoCells } from "@/lib/render/grid";
 
 function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -79,9 +22,28 @@ function roundRect(
   ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
   ctx.lineTo(x + r, y + h);
   ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
+  ctx.lineTo(x + r, y);
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
+}
+
+function hitTest(
+  px: number,
+  py: number,
+  cells: ReturnType<typeof getPhotoCells>
+): number | null {
+  for (let i = 0; i < cells.length; i++) {
+    const rect = cells[i];
+    if (
+      px >= rect.x &&
+      px <= rect.x + rect.w &&
+      py >= rect.y &&
+      py <= rect.y + rect.h
+    ) {
+      return i;
+    }
+  }
+  return null;
 }
 
 interface CollageStageProps {
@@ -96,7 +58,7 @@ export function CollageStage({ photos, onOffsetChange }: CollageStageProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const lastPointer = useRef<{ x: number; y: number } | null>(null);
 
-  const { cols, cellW, cellH } = getGrid(photos.length);
+  const cells = getPhotoCells(photos.length);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -108,12 +70,12 @@ export function CollageStage({ photos, onOffsetChange }: CollageStageProps) {
     const H = layout.cardHeight;
 
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = colors.cream;
+    ctx.fillStyle = colors.primary;
     ctx.fillRect(0, 0, W, H);
 
     for (let i = 0; i < photos.length; i++) {
       const photo = photos[i];
-      const rect = getCellRect(i, cols, cellW, cellH);
+      const rect = cells[i];
 
       roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radii.card);
       ctx.save();
@@ -140,18 +102,18 @@ export function CollageStage({ photos, onOffsetChange }: CollageStageProps) {
       ctx.restore();
 
       roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radii.card);
-      ctx.strokeStyle = colors.coral;
+      ctx.strokeStyle = colors.accent;
       ctx.lineWidth = 8;
       ctx.stroke();
 
       if (i === hoveredIndex && draggingId !== photo.id) {
         roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radii.card);
-        ctx.strokeStyle = colors.lagoon;
-        ctx.lineWidth = 4;
+        ctx.strokeStyle = colors.accent;
+        ctx.lineWidth = 12;
         ctx.stroke();
       }
     }
-  }, [photos, cols, cellW, cellH, hoveredIndex, draggingId]);
+  }, [photos, cells, hoveredIndex, draggingId]);
 
   useEffect(() => {
     draw();
@@ -178,14 +140,14 @@ export function CollageStage({ photos, onOffsetChange }: CollageStageProps) {
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       const pos = getPointerPos(e);
-      const hitIndex = hitTest(pos.x, pos.y, photos, cols, cellW, cellH);
+      const hitIndex = hitTest(pos.x, pos.y, cells);
       if (hitIndex !== null) {
         e.currentTarget.setPointerCapture(e.pointerId);
         setDraggingId(photos[hitIndex].id);
         lastPointer.current = pos;
       }
     },
-    [getPointerPos, photos, cols, cellW, cellH]
+    [getPointerPos, photos, cells]
   );
 
   const handlePointerMove = useCallback(
@@ -193,7 +155,7 @@ export function CollageStage({ photos, onOffsetChange }: CollageStageProps) {
       const pos = getPointerPos(e);
 
       if (!draggingId) {
-        const hitIndex = hitTest(pos.x, pos.y, photos, cols, cellW, cellH);
+        const hitIndex = hitTest(pos.x, pos.y, cells);
         setHoveredIndex(hitIndex);
         return;
       }
@@ -211,7 +173,7 @@ export function CollageStage({ photos, onOffsetChange }: CollageStageProps) {
         });
       }
     },
-    [draggingId, photos, cols, cellW, cellH, getPointerPos, onOffsetChange]
+    [draggingId, photos, cells, getPointerPos, onOffsetChange]
   );
 
   const handlePointerUp = useCallback(
@@ -226,7 +188,7 @@ export function CollageStage({ photos, onOffsetChange }: CollageStageProps) {
   return (
     <div
       ref={wrapperRef}
-      className="w-full max-w-[360px]"
+      className="w-full max-w-[360px] overflow-hidden"
       style={{ aspectRatio: `${layout.cardWidth} / ${layout.cardHeight}` }}
     >
       <canvas
@@ -237,7 +199,7 @@ export function CollageStage({ photos, onOffsetChange }: CollageStageProps) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className={`w-full h-full touch-none rounded-lg border border-sand ${
+        className={`block w-full h-full touch-none rounded-lg border-2 border-sand ${
           draggingId ? "cursor-grabbing" : "cursor-grab"
         }`}
       />

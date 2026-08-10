@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { fraunces, spaceMono, inter } from "@/lib/render/theme";
+import { imbue, victorMono } from "@/lib/render/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${spaceMono.variable} ${inter.variable} h-full antialiased`}
+      className={`${imbue.variable} ${victorMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

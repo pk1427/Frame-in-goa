@@ -1,7 +1,8 @@
 import type { PfpInput } from "@/lib/types";
 import { coverFit } from "@/lib/image/cover";
 import { colors, layout } from "./theme";
-import { frauncesFamily, spaceMonoFamily } from "./fonts";
+import { imbueFamily, victorMonoFamily } from "./fonts";
+import { drawCornerRibbon, drawStickerBadge, seededRotation } from "./motifs";
 
 function drawArcText(
   ctx: CanvasRenderingContext2D,
@@ -11,8 +12,8 @@ function drawArcText(
   radius: number
 ): void {
   const chars = text.split("");
-  ctx.font = `700 36px ${spaceMonoFamily}`;
-  ctx.fillStyle = colors.ink;
+  ctx.font = `700 36px ${victorMonoFamily}`;
+  ctx.fillStyle = colors.white;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
@@ -48,7 +49,7 @@ export function drawPfp(ctx: CanvasRenderingContext2D, input: PfpInput): void {
 
   ctx.clearRect(0, 0, size, size);
 
-  ctx.fillStyle = colors.cream;
+  ctx.fillStyle = colors.primary;
   ctx.fillRect(0, 0, size, size);
 
   const photoR = size * 0.3;
@@ -77,27 +78,45 @@ export function drawPfp(ctx: CanvasRenderingContext2D, input: PfpInput): void {
   );
   ctx.restore();
 
-  const coralR = photoR + 30;
+  const outerR = photoR + 30;
   ctx.beginPath();
-  ctx.arc(cx, cy, coralR, 0, Math.PI * 2);
-  ctx.strokeStyle = colors.coral;
+  ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+  ctx.strokeStyle = colors.accent;
   ctx.lineWidth = 16;
   ctx.stroke();
 
-  const lagoonR = coralR + 40;
+  const pinkR = outerR + 40;
   ctx.beginPath();
-  ctx.arc(cx, cy, lagoonR, 0, Math.PI * 2);
-  ctx.strokeStyle = colors.lagoon;
+  ctx.arc(cx, cy, pinkR, 0, Math.PI * 2);
+  ctx.strokeStyle = colors.pink;
   ctx.lineWidth = 8;
   ctx.setLineDash([20, 15]);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  drawArcText(ctx, "HH GOA 2026 · OPEN TRIALS", cx, cy, lagoonR + 50);
+  drawArcText(ctx, "HH GOA 2026 · OPEN TRIALS", cx, cy, pinkR + 50);
 
-  ctx.font = `700 48px ${frauncesFamily}`;
-  ctx.fillStyle = colors.coral;
+  ctx.font = `700 56px ${imbueFamily}`;
+  ctx.fillStyle = colors.accent;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("#FrameInGoa", cx, size - 120);
+  ctx.fillText("#FrameInGoa", cx, size - 100);
+
+  drawStickerBadge(ctx, "🌴", cx + pinkR - 10, cy - pinkR - 20, 72);
+
+  ctx.font = `700 28px ${victorMonoFamily}`;
+  ctx.fillStyle = colors.accent;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const seed = `${input.image.naturalWidth}-${input.image.naturalHeight}-${input.offset.x}-${input.offset.y}`;
+  const idRotation = seededRotation(seed, 2);
+  const idLabelX = cx - pinkR + 30;
+  const idLabelY = cy + pinkR - 20;
+  ctx.save();
+  ctx.translate(idLabelX, idLabelY);
+  ctx.rotate(idRotation);
+  ctx.fillText("ID CARD", 0, 0);
+  ctx.restore();
+
+  drawCornerRibbon(ctx, "HH GOA 2026");
 }

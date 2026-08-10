@@ -14,13 +14,49 @@ interface ActionBarProps {
   builderClass: string;
   image: HTMLImageElement | null;
   photos?: PhotoSlot[];
+  onShareComplete?: (id: string) => void;
 }
 
-const CAPTIONS = {
-  pfp: "Built my HH Goa PFP 🌴 #FrameInGoa",
-  card: "Built my HH Goa Builder ID 🌴 Can't wait to build with everyone. #FrameInGoa",
-  combined: "Built our HH Goa Team Frame 🌴 #FrameInGoa",
+const CAPTION_TEXT = {
+  pfp: "#FrameInGoa built my hh goa pfp frame 🏖️",
+  card: "#FrameInGoa builder id locked in 🏖️",
+  combined: "#FrameInGoa team frame shipped 🏖️",
 };
+
+function useCanExport(
+  mode: Mode,
+  image: HTMLImageElement | null,
+  photos: PhotoSlot[] | undefined,
+  canvas: HTMLCanvasElement | null
+): boolean {
+  if (!canvas) return false;
+  if (mode === "combined") {
+    return !!(photos && photos.length >= 1);
+  }
+  return !!image;
+}
+
+async function postWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 1
+): Promise<Response> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, options);
+      if (res.ok) return res;
+      if (attempt >= maxRetries) return res;
+    } catch (err) {
+      lastErr = err;
+    }
+    if (attempt < maxRetries) {
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+    }
+  }
+  if (lastErr) throw lastErr;
+  throw new Error("Max retries exceeded");
+}
 
 export function ActionBar({
   canvas,
@@ -30,9 +66,31 @@ export function ActionBar({
   builderClass,
   image,
   photos,
+  onShareComplete,
 }: ActionBarProps) {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const sharingRef = useRef(false);
+
+  const canExport = useCanExport(mode, image, photos, canvas);
+
+  const buildBody = useCallback((): Record<string, unknown> | null => {
+    const isCombined = mode === "combined";
+    if (!isCombined && !image) return null;
+    if (isCombined && (!photos || photos.length === 0)) return null;
+
+    const body: Record<string, unknown> = {
+      mode,
+      name,
+      stack,
+      builderClass,
+    };
+    if (isCombined) {
+      body.photoDataUrls = photos!.map((p) => downscaleToJpeg(p.image, 600));
+    } else {
+      body.photoDataUrl = downscaleToJpeg(image!, 600);
+    }
+    return body;
+  }, [mode, name, stack, builderClass, image, photos]);
 
   const handleDownload = useCallback(() => {
     if (!canvas) return;
@@ -52,41 +110,31 @@ export function ActionBar({
     );
   }, [canvas]);
 
+  const buildShareUrl = useCallback((id: string): string => {
+    return `${window.location.origin}/s/${id}`;
+  }, []);
+
+  const buildTweetUrl = useCallback(
+    (caption: string, shareUrl: string): string => {
+      const encodedText = encodeURIComponent(caption);
+      const encodedUrl = encodeURIComponent(shareUrl);
+      return `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}&via=247pmstudio`;
+    },
+    []
+  );
+
   const handlePostToX = useCallback(async () => {
-    if ((!image && mode !== "combined") || sharingRef.current) return;
-    if (mode === "combined" && (!photos || photos.length === 0)) return;
+    if (!canExport || sharingRef.current) return;
     sharingRef.current = true;
     setToast(null);
 
-    const win = window.open("", "_blank");
-    if (!win) {
-      setToast({ message: "Popup blocked — please allow popups for this site", type: "error" });
-      sharingRef.current = false;
-      return;
-    }
-
     try {
-      const isCombined = mode === "combined";
-      const photoDataUrl = isCombined
-        ? photos![0].image
-        : image!;
-      const photoDataUrls = isCombined
-        ? photos!.map((p) => downscaleToJpeg(p.image, 600))
-        : undefined;
-
-      const body: Record<string, unknown> = {
-        mode,
-        name,
-        stack,
-        builderClass,
-      };
-      if (isCombined) {
-        body.photoDataUrls = photoDataUrls;
-      } else {
-        body.photoDataUrl = downscaleToJpeg(photoDataUrl, 600);
+      const body = buildBody();
+      if (!body) {
+        throw new Error("Missing photo data — upload a photo first.");
       }
 
-      const res = await fetch("/api/share", {
+      const res = await postWithRetry("/api/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -103,48 +151,114 @@ export function ActionBar({
         throw new Error(`Share API response missing id: ${JSON.stringify(json)}`);
       }
 
-      const shareUrl = `${window.location.origin}/s/${id}`;
-      const fullCaption = `${CAPTIONS[mode]} ${shareUrl}`;
+      if (onShareComplete) {
+        onShareComplete(id);
+      }
 
-      win.location.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(fullCaption)}`;
+      const shareUrl = buildShareUrl(id);
+      const caption = CAPTION_TEXT[mode];
+
+      if (!caption.includes("#FrameInGoa")) {
+        setToast({
+          message: "Caption missing #FrameInGoa — please include the hashtag",
+          type: "error",
+        });
+        return;
+      }
+
+      const tweetUrl = buildTweetUrl(caption, shareUrl);
+
+      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+      const canUseWebShare =
+        typeof navigator !== "undefined" &&
+        navigator.canShare &&
+        navigator.canShare({});
+
+      if (isMobile && canUseWebShare) {
+        const blob = await new Promise<Blob | null>((resolve) => {
+          if (!canvas) {
+            resolve(null);
+            return;
+          }
+          canvas.toBlob(resolve, "image/png");
+        });
+
+        if (blob) {
+          const file = new File([blob], "frame-in-goa.png", {
+            type: "image/png",
+          });
+
+          if (navigator.canShare({ files: [file], text: caption, url: shareUrl })) {
+            try {
+              await navigator.share({
+                files: [file],
+                text: caption,
+                url: shareUrl,
+              });
+              setToast({
+                message: "Shared via system dialog",
+                type: "success",
+              });
+              sharingRef.current = false;
+              return;
+            } catch (shareErr) {
+              const isAbort =
+                shareErr instanceof DOMException &&
+                shareErr.name === "AbortError";
+              if (!isAbort) {
+                console.error("[FrameInGoa] navigator.share failed:", shareErr);
+              }
+            }
+          }
+        }
+      }
+
+      handleDownload();
+
+      const win = window.open(tweetUrl, "_blank", "noopener,noreferrer");
+      if (!win) {
+        setToast({
+          message: "Popup blocked — please allow popups for this site",
+          type: "error",
+        });
+        return;
+      }
+      win.focus();
 
       setToast({
-        message: "Opened X — your post is ready, just hit Tweet",
+        message: "Downloaded — attach image in X and hit Tweet",
         type: "success",
       });
     } catch (err) {
-      if (win && !win.closed) {
-        win.close();
-      }
       const message = err instanceof Error ? err.message : "Something went wrong.";
       setToast({ message, type: "error" });
       console.error("[FrameInGoa] Share handler error:", err);
     } finally {
       sharingRef.current = false;
     }
-  }, [mode, name, stack, builderClass, image, photos]);
+  }, [
+    canExport,
+    mode,
+    buildBody,
+    onShareComplete,
+    buildShareUrl,
+    buildTweetUrl,
+    handleDownload,
+    canvas,
+  ]);
 
   const handleMoreOptions = useCallback(async () => {
-    if ((!image && mode !== "combined") || sharingRef.current) return;
-    if (mode === "combined" && (!photos || photos.length === 0)) return;
+    if (!canExport || sharingRef.current) return;
     sharingRef.current = true;
     setToast(null);
 
     try {
-      const isCombined = mode === "combined";
-      const body: Record<string, unknown> = {
-        mode,
-        name,
-        stack,
-        builderClass,
-      };
-      if (isCombined) {
-        body.photoDataUrls = photos!.map((p) => downscaleToJpeg(p.image, 600));
-      } else {
-        body.photoDataUrl = downscaleToJpeg(image!, 600);
+      const body = buildBody();
+      if (!body) {
+        throw new Error("Missing photo data — upload a photo first.");
       }
 
-      const res = await fetch("/api/share", {
+      const res = await postWithRetry("/api/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -161,8 +275,13 @@ export function ActionBar({
         throw new Error(`Share API response missing id: ${JSON.stringify(json)}`);
       }
 
-      const shareUrl = `${window.location.origin}/s/${id}`;
-      const fullCaption = `${CAPTIONS[mode]} ${shareUrl}`;
+      if (onShareComplete) {
+        onShareComplete(id);
+      }
+
+      const shareUrl = buildShareUrl(id);
+      const caption = CAPTION_TEXT[mode];
+      const tweetUrl = buildTweetUrl(caption, shareUrl);
 
       const blob = await new Promise<Blob | null>((resolve) => {
         if (!canvas) {
@@ -179,7 +298,8 @@ export function ActionBar({
         });
         const shareData = {
           title: "Frame In Goa",
-          text: fullCaption,
+          text: caption,
+          url: shareUrl,
           files: [file],
         };
 
@@ -202,11 +322,7 @@ export function ActionBar({
 
       if (!usedNativeShare) {
         handleDownload();
-        window.open(
-          `https://twitter.com/intent/tweet?text=${encodeURIComponent(fullCaption)}`,
-          "_blank",
-          "noopener,noreferrer"
-        );
+        window.open(tweetUrl, "_blank", "noopener,noreferrer");
       }
 
       setToast({
@@ -220,31 +336,48 @@ export function ActionBar({
     } finally {
       sharingRef.current = false;
     }
-  }, [canvas, mode, name, stack, builderClass, image, photos, handleDownload]);
+  }, [
+    canExport,
+    mode,
+    buildBody,
+    onShareComplete,
+    buildShareUrl,
+    buildTweetUrl,
+    handleDownload,
+    canvas,
+  ]);
 
   return (
     <div className="w-full flex flex-col gap-3">
       <button
         onClick={handlePostToX}
-        disabled={!canvas || (!image && mode !== "combined") || (mode === "combined" && (!photos || photos.length === 0))}
-        className="w-full py-3 px-4 rounded-lg bg-coral text-cream font-mono font-bold text-sm hover:bg-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={!canExport}
+        aria-disabled={!canExport}
+        className="w-full py-3 px-4 rounded-lg bg-accent text-ink font-mono font-bold text-sm uppercase tracking-wider hover:bg-primary hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Post to X
+        SHIP TO X
       </button>
       <button
         onClick={handleMoreOptions}
-        disabled={!canvas || (!image && mode !== "combined") || (mode === "combined" && (!photos || photos.length === 0))}
-        className="w-full py-2 px-4 rounded-lg border border-sand text-ink font-mono text-xs hover:bg-sand/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={!canExport}
+        aria-disabled={!canExport}
+        className="w-full py-2 px-4 rounded-lg border-2 border-sand font-mono text-xs text-white uppercase tracking-wider hover:bg-sand/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        More share options
+        MORE OPTIONS
       </button>
       <button
         onClick={handleDownload}
-        disabled={!canvas}
-        className="w-full py-2 px-4 rounded-lg border border-sand text-ink font-mono text-xs hover:bg-sand/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={!canExport}
+        aria-disabled={!canExport}
+        className="w-full py-2 px-4 rounded-lg border-2 border-sand font-mono text-xs text-white uppercase tracking-wider hover:bg-sand/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Download PNG
+        DOWNLOAD
       </button>
+      {!canExport && (
+        <p className="font-mono text-xs text-pink uppercase tracking-wider">
+          UPLOAD A PHOTO FIRST
+        </p>
+      )}
       {toast && (
         <Toast
           message={toast.message}

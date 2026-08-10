@@ -8,6 +8,5 @@ function resolveCssVar(name: string): string {
   return value || name;
 }
 
-export const spaceMonoFamily = resolveCssVar("--font-space-mono");
-export const frauncesFamily = resolveCssVar("--font-fraunces");
-export const interFamily = resolveCssVar("--font-inter");
+export const victorMonoFamily = resolveCssVar("--font-victor-mono");
+export const imbueFamily = resolveCssVar("--font-imbue");
