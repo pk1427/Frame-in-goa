@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import type { Mode } from "@/lib/types";
 import type { PhotoSlot } from "@/lib/types";
 import { downscaleToJpeg } from "@/lib/image/downscale";
+import { drawQrOnCanvas } from "@/lib/render/qr";
 import { Toast } from "@/components/ui/Toast";
 
 interface ActionBarProps {
@@ -162,6 +163,11 @@ export function ActionBar({
       }
 
       const shareUrl = buildShareUrl(id);
+      const ctx = canvas?.getContext("2d");
+      if (ctx) {
+        await drawQrOnCanvas(ctx, shareUrl, photos?.length || 0, mode);
+      }
+
       const caption = CAPTION_TEXT[mode];
 
       if (!caption.includes("#FrameInGoa")) {
@@ -251,6 +257,7 @@ export function ActionBar({
     buildTweetUrl,
     handleDownload,
     canvas,
+    photos,
   ]);
 
   const handleMoreOptions = useCallback(async () => {
@@ -286,6 +293,11 @@ export function ActionBar({
       }
 
       const shareUrl = buildShareUrl(id);
+      const ctx = canvas?.getContext("2d");
+      if (ctx) {
+        await drawQrOnCanvas(ctx, shareUrl, photos?.length || 0, mode);
+      }
+
       const caption = CAPTION_TEXT[mode];
       const tweetUrl = buildTweetUrl(caption, shareUrl);
 
@@ -351,6 +363,7 @@ export function ActionBar({
     buildTweetUrl,
     handleDownload,
     canvas,
+    photos,
   ]);
 
   return (

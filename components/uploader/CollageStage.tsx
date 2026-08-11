@@ -188,7 +188,7 @@ export function CollageStage({ photos, onOffsetChange }: CollageStageProps) {
   return (
     <div
       ref={wrapperRef}
-      className="w-full max-w-[360px] overflow-hidden"
+      className="w-full max-w-[360px] overflow-hidden rounded-lg border-2 border-sand"
       style={{ aspectRatio: `${layout.cardWidth} / ${layout.cardHeight}` }}
     >
       <canvas
@@ -199,7 +199,7 @@ export function CollageStage({ photos, onOffsetChange }: CollageStageProps) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className={`block w-full h-full touch-none rounded-lg border-2 border-sand ${
+        className={`block w-full h-full touch-none ${
           draggingId ? "cursor-grabbing" : "cursor-grab"
         }`}
       />
