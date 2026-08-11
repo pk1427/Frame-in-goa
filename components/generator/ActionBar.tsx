@@ -15,6 +15,7 @@ interface ActionBarProps {
   image: HTMLImageElement | null;
   photos?: PhotoSlot[];
   onShareComplete?: (id: string) => void;
+  slotsTotal?: number;
 }
 
 const CAPTION_TEXT = {
@@ -67,6 +68,7 @@ export function ActionBar({
   image,
   photos,
   onShareComplete,
+  slotsTotal,
 }: ActionBarProps) {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const sharingRef = useRef(false);
@@ -86,11 +88,15 @@ export function ActionBar({
     };
     if (isCombined) {
       body.photoDataUrls = photos!.map((p) => downscaleToJpeg(p.image, 600));
+      body.builderClasses = photos!.map((p) => p.builderClass || "");
+      if (typeof slotsTotal === "number") {
+        body.slotsTotal = slotsTotal;
+      }
     } else {
       body.photoDataUrl = downscaleToJpeg(image!, 600);
     }
     return body;
-  }, [mode, name, stack, builderClass, image, photos]);
+  }, [mode, name, stack, builderClass, image, photos, slotsTotal]);
 
   const handleDownload = useCallback(() => {
     if (!canvas) return;

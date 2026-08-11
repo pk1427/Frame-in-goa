@@ -19,6 +19,7 @@ interface BuilderCanvasProps {
   stack?: string;
   builderClass?: string;
   shareId?: string | null;
+  brandTint?: boolean;
 }
 
 export function BuilderCanvas({
@@ -32,6 +33,7 @@ export function BuilderCanvas({
   stack = "",
   builderClass = "",
   shareId,
+  brandTint = true,
 }: BuilderCanvasProps) {
   const localRef = useRef<HTMLCanvasElement>(null);
 
@@ -56,6 +58,7 @@ export function BuilderCanvas({
         mode: "combined",
         photos,
         layout: layoutMode,
+        brandTint,
       };
       drawCombined(ctx, input);
       return;
@@ -68,6 +71,7 @@ export function BuilderCanvas({
         mode: "pfp",
         image,
         offset,
+        brandTint,
       };
       drawPfp(ctx, input);
     } else if (mode === "card" && image) {
@@ -80,10 +84,11 @@ export function BuilderCanvas({
         name,
         stack,
         builderClass,
+        brandTint,
       };
       drawCard(ctx, input);
     }
-  }, [mode, image, offset, photos, layoutMode, name, stack, builderClass, shareId]);
+  }, [mode, image, offset, photos, layoutMode, name, stack, builderClass, shareId, brandTint]);
 
   useEffect(() => {
     if (!shareId) return;

@@ -3,7 +3,9 @@ import { coverFit } from "@/lib/image/cover";
 import { colors, layout, radii } from "./theme";
 import { imbueFamily, victorMonoFamily } from "./fonts";
 import { drawCornerRibbon } from "./motifs";
-import { getPhotoCells, GRID_PADDING, FOOTER_RESERVE } from "./grid";
+import { getPhotoCells, GRID_PADDING } from "./grid";
+import { applyBrandDuotone } from "@/lib/image/duotone";
+import { computeTeamClass } from "./teamClass";
 
 function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -69,6 +71,10 @@ export function drawCombined(
     );
     ctx.restore();
 
+    if (input.brandTint !== false) {
+      applyBrandDuotone(ctx, Math.round(cell.x), Math.round(cell.y), Math.round(cell.w), Math.round(cell.h));
+    }
+
     roundRect(ctx, cell.x, cell.y, cell.w, cell.h, radii.card);
     ctx.strokeStyle = colors.accent;
     ctx.lineWidth = 8;
@@ -85,20 +91,33 @@ export function drawCombined(
   ctx.lineTo(W - GRID_PADDING - 20, footerY);
   ctx.stroke();
 
+  const teamClasses = photos.map((p) => p.builderClass || "").filter((c) => c.trim().length > 0);
+  const teamInfo = computeTeamClass(teamClasses);
+
   ctx.font = `700 24px ${victorMonoFamily}`;
   ctx.fillStyle = colors.accent;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(`TEAM OF ${photos.length}`, GRID_PADDING + 40, footerY + 50);
+  ctx.fillText(`TEAM OF ${photos.length}`, GRID_PADDING + 40, footerY + 40);
+
+  if (teamClasses.length > 0) {
+    ctx.font = `700 28px ${imbueFamily}`;
+    ctx.fillStyle = colors.accent;
+    ctx.fillText(teamInfo.label, GRID_PADDING + 40, footerY + 75);
+
+    ctx.font = `700 28px ${victorMonoFamily}`;
+    ctx.fillStyle = colors.offwhite;
+    ctx.fillText(`PWR ${teamInfo.power}`, GRID_PADDING + 40, footerY + 110);
+  }
 
   ctx.font = `700 36px ${imbueFamily}`;
   ctx.fillStyle = colors.accent;
   ctx.textAlign = "center";
-  ctx.fillText("#FrameInGoa", W / 2, footerY + 60);
+  ctx.fillText("#FrameInGoa", W / 2, footerY + 100);
 
   const qrSize = 120;
   const qrX = W - GRID_PADDING - qrSize - 40;
-  const qrY = footerY + (FOOTER_RESERVE - qrSize) / 2;
+  const qrY = footerY + 40;
 
   ctx.strokeStyle = colors.sand;
   ctx.lineWidth = 2;

@@ -6,6 +6,17 @@ import { join } from "path";
 
 export const runtime = "nodejs";
 
+const BRAND_DUOTONE_FILTER = `
+<filter id="brand-duotone" color-interpolation-filters="sRGB">
+  <feColorMatrix type="matrix" values="0.299 0.587 0.114 0 0  0.299 0.587 0.114 0 0  0.299 0.587 0.114 0 0  0 0 0 1 0" result="gray"/>
+  <feComponentTransfer in="gray">
+    <feFuncR type="linear" slope="0.9569" intercept="0.0431"/>
+    <feFuncG type="linear" slope="0.5765" intercept="0.4078"/>
+    <feFuncB type="linear" slope="0.6706" intercept="0.2392"/>
+  </feComponentTransfer>
+</filter>
+`;
+
 const imbueBold = readFile(
   join(process.cwd(), "public/fonts/imbue-700.woff2")
 );
@@ -37,6 +48,8 @@ export async function GET(
   const height =
     record.mode === "pfp" ? layout.pfpSize : layout.cardHeight;
 
+  const photoFilterStyle = { filter: "url(#brand-duotone)" };
+
   if (record.mode === "pfp") {
     return new ImageResponse(
       (
@@ -51,6 +64,7 @@ export async function GET(
             fontFamily: "VictorMono",
           }}
         >
+          <svg width="0" height="0" style={{ position: "absolute" }} dangerouslySetInnerHTML={{ __html: BRAND_DUOTONE_FILTER }} />
           <div
             style={{
               position: "relative",
@@ -66,6 +80,7 @@ export async function GET(
               style={{
                 borderRadius: "50%",
                 objectFit: "cover",
+                ...photoFilterStyle,
               }}
               alt=""
             />
@@ -177,6 +192,7 @@ export async function GET(
             borderRadius: 24,
             objectFit: "cover",
             border: "8px solid #FEE101",
+            ...photoFilterStyle,
           }}
           alt=""
         />
@@ -196,6 +212,7 @@ export async function GET(
             fontFamily: "VictorMono",
           }}
         >
+          <svg width="0" height="0" style={{ position: "absolute" }} dangerouslySetInnerHTML={{ __html: BRAND_DUOTONE_FILTER }} />
           <div
             style={{
               position: "relative",
@@ -254,6 +271,7 @@ export async function GET(
           fontFamily: "VictorMono",
         }}
       >
+        <svg width="0" height="0" style={{ position: "absolute" }} dangerouslySetInnerHTML={{ __html: BRAND_DUOTONE_FILTER }} />
         <div
           style={{
             position: "relative",
@@ -285,6 +303,7 @@ export async function GET(
               borderRadius: 24,
               objectFit: "cover",
               border: "8px solid #FEE101",
+              ...photoFilterStyle,
             }}
           />
 

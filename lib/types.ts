@@ -6,12 +6,14 @@ export interface PhotoSlot {
   id: string;
   image: HTMLImageElement;
   offset: { x: number; y: number };
+  builderClass?: string;
 }
 
 export interface PfpInput {
   mode: "pfp";
   image: HTMLImageElement;
   offset: { x: number; y: number };
+  brandTint?: boolean;
 }
 
 export interface CardInput {
@@ -21,6 +23,7 @@ export interface CardInput {
   name: string;
   stack: string;
   builderClass: string;
+  brandTint?: boolean;
 }
 
 export interface CombinedFrameInput {
@@ -28,6 +31,7 @@ export interface CombinedFrameInput {
   photos: PhotoSlot[];
   layout: LayoutMode;
   name?: string;
+  brandTint?: boolean;
 }
 
 export type FrameInput = PfpInput | CardInput | CombinedFrameInput;

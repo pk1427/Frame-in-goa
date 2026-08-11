@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { mode, name, stack, builderClass, photoDataUrl, photoDataUrls } = body;
+    const { mode, name, stack, builderClass, photoDataUrl, photoDataUrls, builderClasses, slotsTotal } = body;
 
     if (!mode) {
       return NextResponse.json(
@@ -30,6 +30,9 @@ export async function POST(request: Request) {
       const id = await saveCombined({
         name: name || "",
         photoDataUrls,
+        builderClasses: Array.isArray(builderClasses) ? builderClasses : undefined,
+        slotsTotal: typeof slotsTotal === "number" ? slotsTotal : photoDataUrls.length,
+        status: typeof slotsTotal === "number" && photoDataUrls.length < slotsTotal ? "in_progress" : "complete",
       });
 
       return NextResponse.json({ id });

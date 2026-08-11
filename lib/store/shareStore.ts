@@ -95,6 +95,9 @@ export interface CombinedFrameRecord {
   mode: "combined";
   name: string;
   photoDataUrls: string[];
+  builderClasses?: string[];
+  slotsTotal: number;
+  status: "in_progress" | "complete";
 }
 
 export async function saveCombined(
@@ -102,7 +105,12 @@ export async function saveCombined(
 ): Promise<string> {
   const id = crypto.randomUUID().split("-")[0];
   const key = `share:${id}`;
-  const fullRecord: CombinedFrameRecord = { ...record, mode: "combined" };
+  const fullRecord: CombinedFrameRecord = {
+    ...record,
+    mode: "combined",
+    slotsTotal: record.slotsTotal || record.photoDataUrls.length,
+    status: record.status || (record.photoDataUrls.length >= (record.slotsTotal || record.photoDataUrls.length) ? "complete" : "in_progress"),
+  };
 
   const kv = await getKv();
   if (kv && typeof kv === "object" && kv !== null) {
@@ -124,6 +132,47 @@ export async function saveCombined(
 
   store.set(key, { value: fullRecord, expires: Date.now() + TTL_SECONDS * 1000 });
   return id;
+}
+
+export async function updateCombined(
+  id: string,
+  updates: { photoDataUrl: string; builderClass?: string }
+): Promise<CombinedFrameRecord | null> {
+  const key = `share:${id}`;
+  const existing = await getCombined(id);
+  if (!existing) return null;
+  if (existing.status === "complete") return existing;
+  if (existing.photoDataUrls.length >= existing.slotsTotal) return existing;
+
+  const newPhotoDataUrls = [...existing.photoDataUrls, updates.photoDataUrl];
+  const newBuilderClasses = [...(existing.builderClasses || []), updates.builderClass || ""];
+  const updated: CombinedFrameRecord = {
+    ...existing,
+    photoDataUrls: newPhotoDataUrls,
+    builderClasses: newBuilderClasses,
+    status: newPhotoDataUrls.length >= existing.slotsTotal ? "complete" : "in_progress",
+  };
+
+  const kv = await getKv();
+  if (kv && typeof kv === "object" && kv !== null) {
+    const client = kv as Record<string, unknown>;
+    const setFn = client.set as ((key: string, value: unknown, options?: { ex?: number }) => Promise<void>) | undefined;
+    if (setFn) {
+      try {
+        await setFn(key, updated, { ex: TTL_SECONDS });
+        return updated;
+      } catch (err) {
+        if (hasKvEnvVars()) {
+          throw new Error(
+            `Failed to connect to Vercel KV: ${err instanceof Error ? err.message : "unknown error"}`
+          );
+        }
+      }
+    }
+  }
+
+  store.set(key, { value: updated, expires: Date.now() + TTL_SECONDS * 1000 });
+  return updated;
 }
 
 export async function getCombined(

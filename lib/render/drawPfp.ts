@@ -3,6 +3,7 @@ import { coverFit } from "@/lib/image/cover";
 import { colors, layout } from "./theme";
 import { imbueFamily, victorMonoFamily } from "./fonts";
 import { drawCornerRibbon, drawStickerBadge, seededRotation } from "./motifs";
+import { applyBrandDuotone } from "@/lib/image/duotone";
 
 function drawArcText(
   ctx: CanvasRenderingContext2D,
@@ -77,6 +78,10 @@ export function drawPfp(ctx: CanvasRenderingContext2D, input: PfpInput): void {
     photoR * 2
   );
   ctx.restore();
+
+  if (input.brandTint !== false) {
+    applyBrandDuotone(ctx, Math.round(cx - photoR), Math.round(cy - photoR), Math.round(photoR * 2), Math.round(photoR * 2));
+  }
 
   const outerR = photoR + 30;
   ctx.beginPath();

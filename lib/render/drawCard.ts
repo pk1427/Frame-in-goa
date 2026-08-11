@@ -3,6 +3,7 @@ import { coverFit } from "@/lib/image/cover";
 import { colors, layout, radii } from "./theme";
 import { imbueFamily, victorMonoFamily } from "./fonts";
 import { drawCornerRibbon, drawPinDot, seededRotation } from "./motifs";
+import { applyBrandDuotone } from "@/lib/image/duotone";
 
 function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -95,6 +96,10 @@ export function drawCard(ctx: CanvasRenderingContext2D, input: CardInput): void 
     photoSize
   );
   ctx.restore();
+
+  if (input.brandTint !== false) {
+    applyBrandDuotone(ctx, Math.round(photoX), Math.round(photoY), photoSize, photoSize);
+  }
 
   roundRect(ctx, photoX, photoY, photoSize, photoSize, radii.card);
   ctx.strokeStyle = colors.accent;
